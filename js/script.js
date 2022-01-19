@@ -30,8 +30,8 @@ const enabledScroll = () => {
    window.scroll({ top: document.body.scrollPosition });
 }
 
-{
-   //! Модальное окно
+{//! Модальное окно
+
    const presentOrderBtn = document.querySelector('.present__order-btn');
    const pageOverlayModal = document.querySelector('.page__overlay_modal');
    const modalClose = document.querySelector('.modal__close');
@@ -87,8 +87,8 @@ const enabledScroll = () => {
    handlerModal(presentOrderBtn, pageOverlayModal, 'page__overlay_modal_open', modalClose, 'slow');
 }
 
-{
-   //! Бургер меню
+{//! Бургер меню
+
    const headerContactsBurger = document.querySelector('.header__contacts-burger');
    const headerContacts = document.querySelector('.header__contacts');
 
@@ -105,4 +105,59 @@ const enabledScroll = () => {
    };
 
    handlerBurger(headerContactsBurger, headerContacts, 'header__contacts_open');
+}
+
+{//! Галерея
+
+   const portfolioList = document.querySelector('.portfolio__list');
+   const pageOverlay = document.createElement('div');
+   pageOverlay.classList.add('page__overlay');
+
+   portfolioList.addEventListener('click', (event) => {
+
+      const card = event.target.closest('.card');
+
+      if (card) {
+         document.body.append(pageOverlay);
+         //! Для улучшенного изображения
+         const title = card.querySelector('.card__client');
+         const picture = document.createElement('picture');
+
+         picture.style.cssText = `
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1440px;
+         `
+
+         picture.innerHTML = `
+            <source srcset="${card.dataset.fullImage}.avif" type="image/avif">
+            <source srcset="${card.dataset.fullImage}.webp" type="image/webp">
+            <img src="${card.dataset.fullImage}.jpg" alt="${title.textContent}">
+         `;
+
+         pageOverlay.append(picture);
+         disableScroll();
+         //! Для просто изображения.
+         //const img = document.createElement('img');
+         //img.src = card.dataset.fullImage + '.jpg';
+         //img.style.cssText = `
+         //   position: absolute;
+         //   top: 20px;
+         //   left: 50%;
+         //   transform: translateX(-50%);
+         //`;
+
+         //pageOverlay.append(img);
+      }
+   });
+
+   pageOverlay.addEventListener('click', () => {
+      pageOverlay.remove();
+      pageOverlay.textContent = '';
+      enabledScroll();
+   })
+
 }
