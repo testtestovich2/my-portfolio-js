@@ -41,36 +41,43 @@ const enabledScroll = () => {
       let opacity = 0;
 
       const speed = {
-         slow: 15,
-         medium: 8,
-         fast: 1,
-         default: 5,
+         slow: 0.03,
+         medium: 0.06,
+         fast: 0.1,
       };
 
       const openModal = () => {
          disableScroll();
          modal.style.opacity = opacity;
-
          modal.classList.add(openSelector);
 
-         const timer = setInterval(() => {
-            opacity += 0.02;
+         const anim = () => {
+            opacity += speed[sk];
             modal.style.opacity = opacity;
-            if (opacity >= 1) clearInterval(timer);
-         }, speed[sk] ? speed[sk] : speed.default);
+            if (opacity < 1) requestAnimationFrame(anim);
+            else {
+               opacity = 1;
+               modal.style.opacity = 1;
+            }
+         };
+         requestAnimationFrame(anim);
       };
 
       const closeModal = () => {
-         enabledScroll();
-         const timer = setInterval(() => {
-            opacity -= 0.02;
-            modal.style.opacity = opacity;
-            if (opacity <= 0) {
-               clearInterval(timer);
-               modal.classList.remove(openSelector);
-            }
-         }, speed[sk] ? speed[sk] : speed.default);
 
+         const anim = () => {
+            opacity -= speed[sk];
+            modal.style.opacity = opacity;
+            if (opacity > 0) {
+               requestAnimationFrame(anim);
+            } else {
+               modal.classList.remove(openSelector);
+               opacity = 0;
+               modal.style.opacity = 0;
+               enabledScroll();
+            };
+         };
+         requestAnimationFrame(anim);
       };
 
       openBtn.addEventListener('click', openModal);
@@ -160,4 +167,81 @@ const enabledScroll = () => {
       enabledScroll();
    })
 
+}
+
+{//! Создание карточек портфолио на основе данных из JSON
+
+   const COUNT_CARD = 2;
+   const portfolioList = document.querySelector('.portfolio__list');
+   const portfolioAdd = document.querySelector('.portfolio__add');
+
+   const getData = () => fetch('db.json')
+      .then((response) => {
+         if (response.ok) {
+            return response.json();
+         } else {
+            throw `Что-то пошло не так, попробуйте позже, ошибка ${response.status}`;
+         }
+      })
+      .catch(error => console.error(error));
+
+   const createStore = async () => {
+      const data = await getData();
+
+      return {
+         data,
+         counter: 0,
+         count: COUNT_CARD,
+         get length() {
+            return this.data.length;
+         },
+         get cardData() {
+            const renderData = this.data.slice(this.counter, this.counter + this.count);
+            this.counter += renderData.length;
+            return renderData;
+         }
+      };
+   };
+
+   const renderCard = data => {
+      const cards = data.map(({ preview, year, type, client, image }) => {
+         const li = document.createElement('li');
+         li.classList.add('portfolio__item');
+
+         li.innerHTML = `
+            <article class="card" tabindex="0" role="button" aria-label="открыть макет"
+               data-full-image="${image}">
+               <picture class="card__picture">
+                  <source srcset="${preview}.avif" type="image/avif">
+                  <source srcset="${preview}.webp" type="image/webp">
+                  <img src="${preview}.jpg" alt="превью iphone" width="166" height="103">
+               </picture>
+
+               <p class="card__data">
+                  <span class="card__client">Клиент: ${client}</span>
+                  <time class="card__date" datetime="${year}">год: ${year}</time>
+               </p>
+
+               <h3 class="card__title">${type}</h3>
+            </article>
+         `;
+         return li;
+      });
+
+      portfolioList.append(...cards)
+
+   }
+
+   const initPortfolio = async () => {
+      const store = await createStore();
+      renderCard(store.cardData);
+      portfolioAdd.addEventListener('click', () => {
+         renderCard(store.cardData);
+         if (store.length === store.counter) {
+            portfolioAdd.remove();
+         }
+      });
+   };
+
+   initPortfolio()
 }
